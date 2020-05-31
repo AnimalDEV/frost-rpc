@@ -1,11 +1,13 @@
 {
   "name": "frost-rpc",
   "version": "1.0.0",
-  "description": "",
+  "description": "Library that helps create RPC API based on JSON-RPC 2.0 standards written in Typescript",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "browser": "dist/bundle.js",
   "scripts": {
     "start": "ts-node src/index.ts",
-    "bundle": "npx browserify src/index.ts -p [ tsify --noImplicitAny ] > bundle.js",
+    "bundle": "npx browserify src/index.ts -p [ tsify --noImplicitAny ] > dist/bundle.js",
     "build": "tsc",
     "build-prod": "tsc --sourceMap false",
     "test": "mocha -r ts-node/register tests/**/*.ts",
@@ -14,11 +16,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AnimalDEV/frozen-rpc.git"
+    "url": "git+https://github.com/AnimalDEV/frost-rpc.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["rpc", "jsonrpc", "typescript"],
+  "author": "Maciej Lasoń",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/AnimalDEV/frozen-rpc/issues"
   },
