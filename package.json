@@ -1,6 +1,6 @@
 {
   "name": "frost-rpc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Library that helps create RPC API based on JSON-RPC 2.0 standards written in Typescript",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
