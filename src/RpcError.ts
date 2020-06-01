@@ -11,6 +11,14 @@ export class RpcError extends Error {
 		this.name = "RpcError";
 		Error.captureStackTrace(this, RpcError);
 	}
+
+	static isError(error: RpcError): boolean {
+		if(!error || typeof error !== "object" || Array.isArray(error)) {
+			return false;
+		}
+		const {code, message} = error;
+		return !!(code && message);
+	}
 }
 
 export class ParseError extends RpcError {

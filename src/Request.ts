@@ -1,89 +1,63 @@
-import { RpcError } from "./RpcError";
-import { ParseError } from "./RpcError";
 import { InvalidRequestError } from "./RpcError";
 import { InvalidVersionError } from "./RpcError";
 
 export class Request {
 	jsonrpc: string;
-	id: number | string | null;
-	method?: string;
+	id: string | number;
+	method: string;
 	params?: Array<unknown> | { [key: string]: unknown };
-	error?: RpcError;
 
-	constructor(method?: string, id?: number | string | null, params?: Array<unknown> | { [key: string]: unknown }, error?: RpcError) {
+	constructor(id: number | string, method: string, params?: Array<unknown> | { [key: string]: unknown }) {
 		this.jsonrpc = "2.0";
-		this.id = typeof id === "number" || typeof id === "string" ? id : null;
+		this.id = id;
 		this.method = method;
 		this.params = params;
-		this.error = error;
 	}
 
-	static validateRequest(req: { [key: string]: unknown }): RpcError | false {
-		const isObject = typeof req === "object" && req !== null && !Array.isArray(req);
+	static validateRequest(request: Request): void {
+		const isObject = typeof request === "object" && request != null && !Array.isArray(request);
 		if (!isObject) {
-			return new InvalidRequestError("Request should be an object");
+			throw new InvalidRequestError("Request should be an object");
 		}
-		if (req?.jsonrpc === undefined) {
-			return new InvalidRequestError("Missing 'jsonrpc' property");
+		if (request?.jsonrpc !== "2.0") {
+			throw new InvalidVersionError("JSONRPC version property should be 2.0");
 		}
-		if (typeof req?.jsonrpc !== "string") {
-			return new InvalidRequestError("Request 'jsonrpc' property should be a string");
-		}
-		if (req?.jsonrpc !== "2.0") {
-			return new InvalidVersionError("Version used should be 2.0");
-		}
-		if (req?.id !== undefined) {
-			if (typeof req?.id !== "string" && typeof req?.id !== "number") {
-				return new InvalidRequestError("Request 'id' property should be a string, or a number");
+		if (request?.id != null) {
+			if (!["string", "number"].includes(typeof request?.id)) {
+				throw new InvalidRequestError("Request 'id' property should be a string, or a number");
 			}
-			if (typeof req?.id === "number") {
-				if (!Number.isInteger(req?.id)) {
-					return new InvalidRequestError("Request 'id' should not contain fractional parts");
+			if (typeof request?.id === "number") {
+				if (!Number.isInteger(request?.id)) {
+					throw new InvalidRequestError("Request 'id' should not contain fractional parts");
 				}
 			}
-			if (typeof req?.id === "string") {
-				if (!req?.id.length) {
-					return new InvalidRequestError("Request 'id' should not be an empty string");
+			if (typeof request?.id === "string") {
+				if (!request?.id.length) {
+					throw new InvalidRequestError("Request 'id' should not be an empty string");
 				}
 			}
 		}
-		if (req?.method === undefined) {
-			return new InvalidRequestError("Missing 'method' property");
+		if (typeof request?.method !== "string") {
+			throw new InvalidRequestError("Request 'method' property should be a string");
 		}
-		if (typeof req?.method !== "string") {
-			return new InvalidRequestError("Request 'method' property should be a string");
+		if (/^rpc\..*/.test(request?.method)) {
+			throw new InvalidRequestError("Method cannot start with 'rpc.'");
 		}
-		if (/^rpc\..*/.test(req?.method)) {
-			return new InvalidRequestError("Method cannot start with 'rpc.'");
-		}
-		if (req?.params !== undefined) {
-			if (typeof req?.params !== "object" || req?.params === null) {
-				return new InvalidRequestError("Request 'params' property should be an object, or an array");
+		if (request?.params !== undefined) {
+			if (typeof request?.params !== "object" || request?.params === null) {
+				throw new InvalidRequestError("Request 'params' property should be an object, or an array");
 			}
 		}
-		return false;
 	}
 
-	static parse(text: string): Request | Request[] {
-		let req;
-		try {
-			req = JSON.parse(text);
-		} catch (e) {
-			return new Request(undefined, null, undefined, new ParseError(e.message));
+	static isRequest(request: Request): boolean {
+		if (!request || typeof request !== "object" || Array.isArray(request)) {
+			return false;
 		}
-		if (Array.isArray(req)) {
-			return req.map((single_req) => {
-				const error = this.validateRequest(single_req);
-				if (error) {
-					return new Request(single_req.method, single_req.id, single_req.params, error);
-				}
-				return new Request(single_req.method, single_req.id, single_req.params);
-			});
+		const { jsonrpc, method, id, params } = request;
+		if (params && (!Array.isArray(params) || typeof params !== "object")) {
+			return false;
 		}
-		const error = this.validateRequest(req);
-		if (error) {
-			return new Request(req.method, req.id, req.params, error);
-		}
-		return new Request(req.method, req.id, req.params);
+		return !!(jsonrpc && method && id);
 	}
 }

@@ -1,9 +1,8 @@
-import { RpcError } from "./index";
-import { Request } from "./Request";
+import { InvalidRequestError, InvalidVersionError, RpcError } from "./index";
 
 export class Response {
 	jsonrpc: string;
-	id?: number | string | null;
+	id: number | string | null;
 	result?: unknown;
 	error?: RpcError;
 
@@ -14,15 +13,39 @@ export class Response {
 		this.error = error;
 	}
 
-	static fromRequest(request: Request): Response {
-		const { id, error } = request;
-		if (error) {
-			return this.withError(error, id);
+	static validateResponse(response: Response): void {
+		const isObject = typeof response === "object" && response != null && !Array.isArray(response);
+		if (!isObject) {
+			throw new InvalidRequestError("Response should be an object");
 		}
-		return new Response(id, undefined);
+		if (response?.jsonrpc !== "2.0") {
+			throw new InvalidVersionError("JSONRPC version property should be 2.0");
+		}
+		if(response?.result && response?.error) {
+			throw new InvalidRequestError("Result and error cannot be returned together");
+		}
+		if(!response?.result && !response?.error) {
+			throw new InvalidRequestError("Missing result or error");
+		}
+		if(response?.error && !RpcError.isError(response?.error)) {
+			throw new InvalidRequestError("Invalid error structure");
+		}
 	}
 
-	static withError(error: RpcError, id: number | string | null = null): Response {
-		return new Response(id, undefined, error);
+	static isResponse(response: Response): boolean {
+		if(!response || typeof response !== "object" || Array.isArray(response)) {
+			return false;
+		}
+		const {jsonrpc, result, error, id} = response;
+		if(result && error) {
+			return false;
+		}
+		if(!result && !error) {
+			return false;
+		}
+		if(error && !RpcError.isError(error)) {
+			return false;
+		}
+		return !!(jsonrpc && id);
 	}
 }
