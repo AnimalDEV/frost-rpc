@@ -55,26 +55,3 @@ export class FrostRpc {
 		}
 	}
 }
-//
-// static parse(text: string): Request | Request[] {
-// 	let req;
-// 	try {
-// 		req = JSON.parse(text);
-// 	} catch (e) {
-// 		return new Request(undefined, null, undefined, new ParseError(e.message));
-// 	}
-// 	if (Array.isArray(req)) {
-// 		return req.map((single_req) => {
-// 			const error = this.validateRequest(single_req);
-// 			if (error) {
-// 				return new Request(single_req.method, single_req.id, single_req.params, error);
-// 			}
-// 			return new Request(single_req.method, single_req.id, single_req.params);
-// 		});
-// 	}
-// 	const error = this.validateRequest(req);
-// 	if (error) {
-// 		return new Request(req.method, req.id, req.params, error);
-// 	}
-// 	return new Request(req.method, req.id, req.params);
-// }
